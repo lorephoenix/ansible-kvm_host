@@ -1,0 +1,104 @@
+---
+#------------------------------------------------------
+# The default variable libvirt_profile can have
+# multiple storage pools. Lack of easy or intuitive
+# way to extract only pool names that I use set_fact.
+#
+# As 'pool_list' is not defined in the first run, it is
+# created as an empty list via the default([]) filter.
+# Afterwards the 'pool_list' string is created and 
+# appended to the empty list via list addition.
+#
+# As we use 'with_items', this is done for every
+# dictionary in the libvirt_profile['libvirt_pools']
+# list.
+#------------------------------------------------------
+#
+- name: Build list of pool names for later use
+  set_fact:
+    pool_list: "\
+        {{ pool_list | default([]) }} + \
+        [ '{{ item['name'] }}' ]"
+  with_items: "{{ libvirt_profile['libvirt_pools'] }}"
+
+- name: Debug variable contains list of pool names
+  debug:
+    msg: '{{ pool_list }}'
+    verbosity: 1
+
+#------------------------------------------------------
+# Compare if the available storage pools are also
+# configured on our libvirt_profile variable.
+#
+# If we don't find our storage pool within our
+# libvirt-profile then remove that storge pool.
+#------------------------------------------------------
+#
+- name: Get list of libvirt pools
+  virt_pool:
+    command: list_pools
+  register: libvirt_reglist
+  tags: [ 'libvirt' , 'kvm host', 'pool::list_pools' ]
+
+- name: Start libvirt pool cleanup
+  include_tasks: libvirt_pool_cleanup.yml
+  when: ( ( libvirt_reglist is defined )  and
+          ( libvirt_reglist['list_pools'] is defined ) and
+          ( libvirt_reglist['list_pools']|length>0 ) )
+  with_items:
+    - '{{ libvirt_reglist.list_pools }}'
+  tags: [ 'libvirt', 'kvm host', 'pool', 'storage' ]
+
+
+#------------------------------------------------------
+# Check for each storage pool if the storage pool path
+# is the same as configured under the default 
+# libvirt_profile variable.
+#------------------------------------------------------
+#
+- name: Check configured pool path with existing pools
+  include_tasks: libvirt_pool_pathcontrol.yml
+  when: (
+          ( libvirt_profile is defined ) and 
+          ( libvirt_profile['libvirt_pools'] is defined )  and
+          ( libvirt_profile['libvirt_pools']|length>0 ) )
+  with_items: 
+    - '{{ libvirt_profile.libvirt_pools }}'
+
+
+#------------------------------------------------------
+# Storage pools that are missing will be defined and 
+# build as defined under the default variable
+# libvirt_profile.
+#------------------------------------------------------
+#
+- name: Create new storage pools
+  include_tasks: libvirt_pool_creation.yml
+  when: ( ( libvirt_profile is defined ) and 
+          ( libvirt_profile['libvirt_pools'] is defined )  and
+          ( libvirt_profile['libvirt_pools']|length>0 ) )
+  with_items: 
+   - '{{ libvirt_profile.libvirt_pools }}'
+
+
+#------------------------------------------------------
+# Check the status and autostart of each storage pool 
+# and if # needed to start the storage pool.
+#------------------------------------------------------
+#
+- name: Control storage pools
+  include_tasks: libvirt_pool_status.yml
+  when: ( ( libvirt_profile is defined ) and 
+          ( libvirt_profile['libvirt_pools'] is defined )  and
+          ( libvirt_profile['libvirt_pools']|length>0 ) )
+  with_items: 
+   - '{{ libvirt_profile.libvirt_pools }}'
+     
+
+
+
+
+
+
+
+

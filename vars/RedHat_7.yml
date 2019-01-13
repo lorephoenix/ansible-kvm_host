@@ -1,0 +1,24 @@
+---
+os_supported: True
+libvirt_service_name: libvirtd
+libvirt_owner: qemu
+libvirt_group: qemu
+libvirt_selinux_setype: virt_image_t
+
+
+# List of packages to install by default on any rhel family system.
+libvirt_base_pkgs:
+  - bridge-utils
+  - dejavu-lgc-sans-fonts
+  - libselinux-python
+  - libvirt
+  - libvirt-python
+  - kvm
+  - policycoreutils-python
+  - python-lxml
+  - qemu-kvm
+  - qemu-kvm-tools
+  - virt-install
+  - virt-manager
+  - xauth
+

@@ -1,0 +1,40 @@
+---
+- name: Load OS dependent variables
+  include_vars: '{{ item_os }}'
+  with_first_found:
+    - '{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_distribution }}.yml'
+    - '{{ ansible_os_family }}_{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_os_family }}.yml'
+  loop_control:
+    loop_var: item_os
+  tags: [ 'OS dependency']
+
+- name: OS is supported
+  assert:
+    that: os_supported == True
+  tags: [ 'OS dependency']
+
+- name: Install - Ensure that the KVM packages are installed on hypervisor host
+  package:
+    name: '{{ item }}'
+    state: present
+  with_items: "{{ libvirt_base_pkgs }}"
+  tags: [ 'package' ]
+
+- name: Start service '{{ libvirt_service_name }}'
+  service: 
+    name: '{{ libvirt_service_name }}'
+    state: started 
+    enabled: yes
+  register: libvirtd
+  tags: [ 'libvirt' , 'service' ]
+
+- name: Wait for libvirtd to get up
+  pause: seconds=30
+  when: libvirtd.changed
+  tags: [ 'pause' ]
+
+- name: Load libvirt task
+  include_tasks: libvirt.yml
+  tags: [ 'libvirt' , 'KVM host' ]

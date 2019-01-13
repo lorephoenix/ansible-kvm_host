@@ -1,0 +1,15 @@
+---
+- name: Start storage pool '{{ item.name }}', if not started
+  virt_pool:
+    name: '{{ item.name }}'
+    state: active
+  tags: [ 'libvirt' , 'kvm host' , 'pool::start' , 'storage' ]
+
+- name: Ensure that the give pool will be started at boot
+  virt_pool:
+    autostart: yes
+    name: '{{ item.name }}'
+  tags: [ 'libvirt' , 'kvm host' , 'pool::autostart' , 'storage' ]
+
+
+

@@ -1,0 +1,48 @@
+---
+# Gather facts about storage pools
+# Facts will be available as 'ansible_libvirt_pools'
+- virt_pool:
+    command: facts
+
+- debug: 
+    msg: '{{ ansible_libvirt_pools }}'
+    verbosity: 1
+  when: item.name not in ansible_libvirt_pools
+
+- name: Create libvirt pool '{{ item.path }}' directory, If needed
+  file:
+    path: '{{ item.path }}'
+    state: directory
+    owner: '{{ libvirt_owner }}'
+    group: '{{ libvirt_group }}'
+    mode: 0711
+  when: item.name not in ansible_libvirt_pools
+  tags: [ 'libvirt' , 'kvm host' , 'pool::directory' , 'storage' ]
+
+- name: SELinux file context mapping
+  sefcontext:
+    target: '{{ item.path }}(/.$)?'
+    setype: '{{ libvirt_selinux_setype }}'
+    state: present
+  when: ( ( ansible_selinux is defined ) and
+          ( ansible_selinux.status == "enabled" ) and
+          ( ansible_selinux.mode != "disabled" ) )
+
+
+- name: Define storage pool '{{ item.name }}'
+  virt_pool:
+    command: define
+    name: '{{ item.name }}'
+    xml: '{{ lookup("template", "pool.xml.j2") }}'
+  register: libvirt_regdefine
+  when: item.name not in ansible_libvirt_pools
+  tags: [ 'libvirt' , 'kvm host' , 'pool::define' , 'storage' ]
+
+- name: Build new storage pool '{{ item.name }}'
+  virt_pool:
+    command: build
+    name: '{{ item.name }}'
+  when: ( item.name not in ansible_libvirt_pools and 
+          libvirt_regdefine is defined )
+  tags: [ 'libvirt' , 'kvm host' , 'pool::build' , 'storage' ]
+

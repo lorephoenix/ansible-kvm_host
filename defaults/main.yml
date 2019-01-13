@@ -1,0 +1,35 @@
+---
+# --------------------------
+#   libvirt host profiles
+# --------------------------
+profile_default:
+    # The default libvirt setting - local access to system instance 
+    libvirt_default_uri: 'qemu:///system'
+    libvirt_pools:
+      - '{{ libvirt_pool_default }}'
+
+profile_homebrew:
+    libvirt_default_uri: 'qemu:///system'
+    libvirt_pools:
+      - '{{ libvirt_pool_homebrew }}'
+
+profile_full:
+    libvirt_default_uri: 'qemu:///system'
+    libvirt_pools:
+      - '{{ libvirt_pool_default }}'
+      - '{{ libvirt_pool_homebrew }}'
+
+
+# --------------------------
+#   libvirt pool profiles
+# --------------------------
+libvirt_pool_default:
+    name: default
+    path: /var/cached/libvirt
+
+libvirt_pool_homebrew:
+    name: homebrew
+    path: /vm
+
+
+

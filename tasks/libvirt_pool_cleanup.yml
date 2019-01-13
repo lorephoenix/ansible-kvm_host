@@ -1,0 +1,55 @@
+---
+# -----------------------------------------------------
+# Clean-up existing storage pools that aren't specified
+# within our playbook variable libvirt_profile which
+# is linked to our default variables
+# -----------------------------------------------------
+# 
+- virt_pool:
+    command: facts
+  when: item not in pool_list
+
+- name: Status storage pool '{{ item }}' - Cleanup
+  virt_pool:
+    command: status
+    name: '{{ item }}'
+  register: libvirt_regstatus
+  when: item not in pool_list
+  tags: [ 'libvirt' , 'kvm host' , 'pool::status' , 'storage' ]
+
+- name: Stop storage pool '{{ item }}' - Cleanup
+  virt_pool:
+    command: destroy
+    name: '{{ item }}'
+  register: libvirt_regstop
+  when: (
+          ( item not in pool_list ) and
+          ( libvirt_regstatus.status == 'active' )
+        )
+  tags: [ 'libvirt' , 'kvm host' , 'pool::destroy' , 'storage' ]
+
+- name: Undefine storage pool '{{ item }}' - Cleanup
+  virt_pool:
+    command: undefine
+    name: '{{ item }}'
+  when: item not in pool_list        
+  tags: [ 'libvirt' , 'kvm host' , 'pool::undefine' , 'storage' ]
+
+- name: Get path from unwanted storage pool - Cleanup
+  set_fact:
+    pool_path: "{{ ansible_libvirt_pools[item]['path'] }}"
+  register: libvirt_regpath
+  when: item not in pool_list 
+  tags: [ 'libvirt' , 'kvm host' , 'pool' , 'storage' ]
+ 
+- name: Remove SELinux file context mapping - Cleanup
+  sefcontext:
+    target: '{{ pool_path }}(/.$)?'
+    setype: '{{ libvirt_selinux_setype }}'
+    state: absent
+  when: ( ( ansible_selinux is defined ) and
+          ( ansible_selinux.status == "enabled" ) and
+          ( ansible_selinux.mode != "disabled" ) and
+          ( item not in pool_list ))
+  tags: [ 'libvirt' , 'kvm host' , 'selinux::remove' , 'storage' ]
+

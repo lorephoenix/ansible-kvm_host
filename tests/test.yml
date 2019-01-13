@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  remote_user: root
+  roles:
+    - role: kvm_host
+      libvirt_profile: "{{ profile_default }}"
+

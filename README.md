@@ -1,5 +1,5 @@
 
-kvm_host       
+kvm_host       [![Build Status](https://travis-ci.org/lorephoenix/ansible-kvm_host.svg?branch=master)](https://travis-ci.org/lorephoenix/ansible-kvm_host)
 =========
 
 The kvm_host role will install KVM packages on a host. It is also able to manage storage pools.

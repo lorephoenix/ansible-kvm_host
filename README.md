@@ -4,6 +4,9 @@ kvm_host       [![Build Status](https://travis-ci.org/lorephoenix/ansible-kvm_ho
 
 The kvm_host role will install KVM packages on a host. It is also able to manage storage pools.
 
+        git clone https://github.com/lorephoenix/ansible-kvm_host kvm_host
+
+
 Requirements
 ------------
 
@@ -74,7 +77,7 @@ This is an example playbook:
       become_user: root
       roles:
         - role: 
-            kvm.host 
+            kvm_host 
             libvirt_profile: "{{ profile_default }}"
 
 License

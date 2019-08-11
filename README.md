@@ -76,9 +76,8 @@ This is an example playbook:
       become_method: sudo
       become_user: root
       roles:
-        - role: 
-            kvm_host 
-            libvirt_profile: "{{ profile_default }}"
+      - role: kvm_host 
+        libvirt_profile: "{{ profile_default }}"
 
 License
 -------
